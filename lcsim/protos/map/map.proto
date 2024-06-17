@@ -1,0 +1,372 @@
+syntax = "proto3";
+
+package map;
+
+import "geo/geo.proto";
+import "map/light.proto";
+
+// 本文件描述地图的数据结构定义
+// This file describes the data structure of the map
+
+// 折线，用于定义车道等的形状
+// Polyline, used to define the shape of lanes, etc.
+message Polyline {
+  // 折线上的点
+  // Points of the polyline
+  repeated geo.XYPosition nodes = 1;
+}
+
+// 地图元信息
+// Map meta information
+message Header {
+  // 地图名称
+  // Map name
+  string name = 1;
+
+  // 地图创建时间
+  // Map creation time
+  string date = 2;
+
+  // 地图边界的xy坐标
+  // xy coordinates of the map boundary
+
+  // 最大纬度对应的y坐标
+  // y coordinate corresponding to the maximum latitude
+  double north = 3;
+  // 最小纬度对应的y坐标
+  // y coordinate corresponding to the minimum latitude
+  double south = 4;
+  // 最大经度对应的x坐标
+  // x coordinate corresponding to the maximum longitude
+  double east = 5;
+  // 最小经度对应的x坐标
+  // x coordinate corresponding to the minimum longitude
+  double west = 6;
+
+  // PROJ.4 投影字符串，用以支持xy坐标到其他坐标系的转换
+  // PROJ.4 projection string to support the conversion of xy coordinates to
+  // other coordinate systems
+  string projection = 7;
+}
+
+// 车道类型
+// Lane type
+enum LaneType {
+  // 未指定
+  // unspecified
+  LANE_TYPE_UNSPECIFIED = 0;
+  // 行车
+  // driving
+  LANE_TYPE_DRIVING = 1;
+  // 步行
+  // walking
+  LANE_TYPE_WALKING = 2;
+}
+
+// 车道转向
+// lane turn type
+enum LaneTurn {
+  // 未指定
+  // unspecified
+  LANE_TURN_UNSPECIFIED = 0;
+  // 直行
+  // go straight
+  LANE_TURN_STRAIGHT = 1;
+  // 左转
+  // turn left
+  LANE_TURN_LEFT = 2;
+  // 右转
+  // turn right
+  LANE_TURN_RIGHT = 3;
+  // 掉头
+  // turn around
+  LANE_TURN_AROUND = 4;
+}
+
+// 两个lane的冲突区域
+// Conflict area between two lanes
+message LaneOverlap {
+  // 冲突点在本车道上的坐标
+  // Coordinates of the conflict point on this lane
+  geo.LanePosition self = 1;
+  // 冲突点在冲突车道上的坐标
+  // Coordinates of the conflict point on the conflicted lane
+  geo.LanePosition other = 2;
+  // 本车道是否有优先通行权
+  // Whether this lane has priority
+  bool self_first = 3;
+}
+
+// 车道连接类型
+// Lane connection type
+enum LaneConnectionType {
+  // 未指定
+  // unspecified
+  LANE_CONNECTION_TYPE_UNSPECIFIED = 0;
+  // 连接处为道路开头
+  // The connection is at the lane head
+  LANE_CONNECTION_TYPE_HEAD = 1;
+  // 连接处为道路结尾
+  // The connection is at the lane tail
+  LANE_CONNECTION_TYPE_TAIL = 2;
+}
+
+// 车道连接信息
+// Lane connection information
+message LaneConnection {
+  // 所连接的车道Lane的ID
+  // ID of the connected lane
+  int32 id = 1;
+  // 连接类型
+  // Connection type
+  LaneConnectionType type = 2;
+}
+
+enum CenterLineType {
+  CENTER_LINE_TYPE_UNSPECIFIED = 0;
+  CENTER_LINE_TYPE_FREEWAY = 1;
+  CENTER_LINE_TYPE_SURFACE_STREET = 2;
+  CENTER_LINE_TYPE_BIKE = 3;
+}
+
+// Lane，用于描述道路上的车道、人行道等
+// Lane, used to describe lanes, sidewalks, etc. on the road
+message Lane {
+  // 车道id（从0开始）
+  // lane id (starts from 0)
+  int32 id = 1;
+  // 车道类型
+  // lane type
+  LaneType type = 2;
+  // 车道转向
+  // lane turn type
+  LaneTurn turn = 3;
+
+  // 限速 (m/s)
+  // max speed (m/s)
+  double max_speed = 4;
+
+  // 中心线长度（单位：米）
+  // centerline length (in meters)
+  double length = 5;
+  // 车道宽度（单位：米）
+  // lane width (in meters)
+  double width = 6;
+
+  // ATTENTION: 折线采样点不保证在多个折线之间保持一致
+  // ATTENTION: Polyline sampling points are not guaranteed to be consistent
+  // across multiple polylines
+
+  // 车道中心线（车辆/行车轨迹线）
+  // Lane center line (vehicle/driving line)
+  Polyline center_line = 7;
+  // 车道左边界线
+  // Lane left boundary line
+  Polyline left_border_line = 8 [ deprecated = true ]; // 弃用 deprecated
+  // 车道右边界线
+  // Lane right boundary line
+  Polyline right_border_line = 9 [ deprecated = true ]; // 弃用 deprecated
+
+  // Lanes can drive / walk from
+  // 对于Junction内的车道至多1个前驱
+  // For lanes within junction, there is at most 1 predecessor
+  // 对于LANE_TYPE_DRIVING，连接类型必为LANE_CONNECTION_TYPE_TAIL
+  // For LANE_TYPE_DRIVING, the connection type must be
+  // LANE_CONNECTION_TYPE_TAIL 对于LANE_TYPE_WALKING连接类型，两种都有可能 For
+  // LANE_TYPE_WALKING, both connection types are possible
+  repeated LaneConnection predecessors = 10;
+  // Lanes can drive / walk to
+  // 对于Junction内的车道至多1个后继
+  // For lanes within junction, there is at most 1 successor
+  // 对于LANE_TYPE_DRIVING，连接类型必为LANE_CONNECTION_TYPE_HEAD
+  // For LANE_TYPE_DRIVING, the connection type must be
+  // LANE_CONNECTION_TYPE_HEAD 对于LANE_TYPE_WALKING连接类型，两种都有可能 For
+  // LANE_TYPE_WALKING, both connection types are possible
+  repeated LaneConnection successors = 11;
+  // 左侧相邻车道（按从近到远排列）
+  // Adjacent lanes on the left (arranged from nearest to far)
+  repeated int32 left_lane_ids = 12;
+  // 右侧相邻车道（按从近到远排列）
+  // Adjacent lanes on the right (arranged from nearest to far)
+  repeated int32 right_lane_ids = 13;
+
+  // 所属的道路road id或路口junction id
+  // The road id or junction id it belongs to
+  int32 parent_id = 14;
+
+  // 车道之间的冲突点（仅在Junction内有效），保证按照self_s从小到大排序
+  // Conflict points between lanes (valid only within Junction), guaranteed to
+  // be sorted from small to large according to self_s
+  repeated LaneOverlap overlaps = 15;
+
+  // 车道中心线类型
+  // Center line type
+  CenterLineType center_line_type = 16;
+}
+
+message NextRoadLane {
+  // 下一条路的id
+  // ID of the next road
+  int32 road_id = 1;
+  // 我们假定能去往对应道路的车道id范围是连续的，用[a,b]表示
+  // We assume that the range of lane IDs of the next road is continuous,
+  // represented by [a, b]
+  int32 lane_id_a = 2;
+  int32 lane_id_b = 3;
+}
+
+message NextRoadLanePlan {
+  // 记录去往目标next_road的可行lane集合
+  // set of feasible lanes for going to the next_road
+  repeated NextRoadLane next_road_lanes = 1;
+}
+
+// 车道线类型
+// 参考https://github.com/waymo-research/waymo-open-dataset
+enum RoadLineType {
+  ROAD_LINE_TYPE_UNSPECIFIED = 0;
+  ROAD_LINE_TYPE_BROKEN_SINGLE_WHITE = 1;
+  ROAD_LINE_TYPE_SOLID_SINGLE_WHITE = 2;
+  ROAD_LINE_TYPE_SOLID_DOUBLE_WHITE = 3;
+  ROAD_LINE_TYPE_BROKEN_SINGLE_YELLOW = 4;
+  ROAD_LINE_TYPE_BROKEN_DOUBLE_YELLOW = 5;
+  ROAD_LINE_TYPE_SOLID_SINGLE_YELLOW = 6;
+  ROAD_LINE_TYPE_SOLID_DOUBLE_YELLOW = 7;
+  ROAD_LINE_TYPE_PASSING_DOUBLE_YELLOW = 8;
+}
+
+// 车道线
+// road line
+message RoadLine {
+  // 车道线类型
+  // Road line type
+  RoadLineType type = 1;
+  // 车道线上的点
+  // Points on the road line
+  repeated geo.XYPosition nodes = 2;
+}
+
+// RoadConnection，用于描述道路之间的连接（平行对向道路）
+// RoadConnection, used to describe the connection between roads
+message RoadConnection {
+  // 车道线类型
+  // Road line type
+  RoadLineType type = 1;
+  // 车道线上的点
+  // Points on the road line
+  repeated geo.XYPosition nodes = 2;
+  // 连接的道路id
+  // ID of the connected road
+  int32 road_id = 3;
+}
+
+// 车道边界类型
+// 参考https://github.com/waymo-research/waymo-open-dataset
+enum RoadEdgeType {
+  ROAD_EDGE_TYPE_UNSPECIFIED = 0;
+  ROAD_EDGE_TYPE_BOUNDARY = 1;
+  ROAD_EDGE_TYPE_MEDIAN = 2;
+}
+
+// RoadEdge，用于描述道路边界
+// RoadEdge, used to describe road boundaries
+message RoadEdge {
+  // 车道边界类型
+  // Road edge type
+  RoadEdgeType type = 1;
+  // 车道边界线上的点
+  // Points on the road edge line
+  repeated geo.XYPosition nodes = 2;
+}
+
+// Road，用于描述道路
+// Road, describing roads
+message Road {
+  // 道路id（从2_0000_0000开始）
+  // Road ID (starting from 2_0000_0000)
+  int32 id = 1;
+  // 道路名字
+  // road name
+  string name = 4;
+  // 属于该道路Road的所有车道/人行道等lane
+  // All lanes/sidewalks belonging to the road
+  // lane_id是按从最左侧车道到最右侧车道(从前进方向来看)的顺序给出的
+  // lane_ids are given in order from the leftmost lane to the rightmost lane
+  // (viewed from the forward direction)
+  repeated int32 lane_ids = 2;
+  // 对于包含动态车道的道路，需要通过这一项来指定所有的候选方案
+  // For roads containing dynamic lanes, this is required to specify all
+  // candidates
+  repeated NextRoadLanePlan next_road_lane_plans = 3;
+  // 车道线
+  // road lines
+  repeated RoadLine road_lines = 5;
+  // 车道边界
+  // road edges
+  repeated RoadEdge road_edges = 6;
+  // 道路连接
+  // road connections
+  repeated RoadConnection road_connections = 7;
+}
+
+// 车道组，用于描述路口内的车道组合
+// Lane group, describing the combination of lanes within an intersection
+// 具有相同入口道路和出口道路的车道组成一个车道组
+// Lanes with the same entrance and exit roads form a lane group
+// 车道组是信控处理、路口通行的基本单元
+// Lane group is the basic unit for signal control and traffic in the junction.
+message JunctionLaneGroup {
+  // 该车道组的入口道路
+  // The entrance road to this lane group
+  int32 in_road_id = 1;
+  // 该车道组的入口角度（弧度制）
+  // The entrance angle of this lane group (in radians)
+  double in_angle = 2;
+  // 该车道组的出口道路
+  // The exit road for this lane group
+  int32 out_road_id = 3;
+  // 该车道组的出口角度（弧度制）
+  // The exit angle of this lane group (in radians)
+  double out_angle = 4;
+  // 该车道组包含的车道
+  // Lanes in the group
+  repeated int32 lane_ids = 5;
+  // 该车道组的转向属性
+  // The turn type of this lane group
+  LaneTurn turn = 6;
+}
+
+// Junction，用于描述路口
+// Junction, describing road intersections
+message Junction {
+  // 路口id（从3_0000_0000开始）
+  // Junction id (starting from 3_0000_0000)
+  int32 id = 1;
+  // 属于该路口Junction的所有车道/人行道等lane
+  // All driving/walking lanes belonging to this junction.
+  repeated int32 lane_ids = 2;
+  // 属于该路口Junction的所有行车车道组
+  // All driving lane groups belonging to this junction
+  repeated JunctionLaneGroup driving_lane_groups = 3;
+  // 所有可用信号灯相位
+  // All available phases for max pressure algorithm
+  repeated AvailablePhase phases = 4;
+  // 默认固定相位信号灯
+  // Default fixed phases traffic light
+  optional TrafficLight fixed_program = 5;
+  // 路口内部车道线
+  // Junction internal road lines
+  repeated RoadLine road_lines = 6;
+  // 路口道路边界
+  // Junction road boundary
+  repeated RoadEdge road_edges = 7;
+}
+
+// 地图，对应一个地图pb文件或一个地图mongodb collection
+// Map, corresponding to a map pb file or a map MongoDB collection
+message Map {
+  Header header = 1;
+  repeated Lane lanes = 2;
+  repeated Road roads = 3;
+  repeated Junction junctions = 4;
+}

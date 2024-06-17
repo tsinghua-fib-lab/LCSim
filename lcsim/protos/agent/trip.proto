@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package agent;
+
+import "geo/geo.proto";
+import "routing/routing.proto";
+
+// 本文件描述Trip与Schedule，从“计划”的性质上描述交通情况。
+// This file describes Trip and Schedule, describing the traffic situation from
+// the perspective of plan.
+
+// Trip用以描述从当前点到下一点的一次出行，可以包含多种出行方式（乘车、步行等），
+// Trip is used to describe a trip from the current point to the next point,
+// which can include multiple travel modes (taking vehicles, walking, etc.),
+// 并且可以指定主要的交通方式TripMode。
+// And the main travel mode can be specified as TripMode.
+// 一个Trip在经过路径规划后，将转化为多个journey，并按照journey进行模拟。
+// After routing, a Trip will be transformed into multiple journals and
+// simulated according to the journals.
+
+// Schedule包含一组Trip，可以额外指定这一组Trip应该要循环几次
+// The Schedule contains a set of Trips, which can be additionally specified as
+// how many times this set of Trips should loop
+
+// 出行偏好
+// Preferred trip travel mode
+enum TripMode {
+  // 未指定出行方式
+  // unspecified
+  TRIP_MODE_UNSPECIFIED = 0;
+
+  // 指定出行方式
+  // Specify the travel mode
+
+  // 仅步行
+  // walking only
+  TRIP_MODE_WALK_ONLY = 1;
+  // 仅开车
+  // driving only
+  TRIP_MODE_DRIVE_ONLY = 2;
+  // 乘坐公交车（含站点间步行换乘）
+  // taking bus with walking to transit bus line between stations
+  TRIP_MODE_BUS_WALK = 4;
+  // 当有自行车时选择骑自行车，否则步行
+  // Riding bikes if avaible, otherwise walking
+  TRIP_MODE_BIKE_WALK = 5;
+}
+
+// 智能体状态
+// Agent state
+message AgentState {
+  // 当前位置
+  // Current position
+  geo.XYPosition position = 1;
+  // 当前速度
+  // Current speed
+  double velocity_x = 2;
+  double velocity_y = 3;
+  // 当前朝向
+  // Current heading
+  double heading = 4;
+}
+
+// 出行
+// Trip
+message Trip {
+  // 出行方式
+  // trip mode
+  TripMode mode = 1;
+  // 目的地
+  // destination
+  geo.Position end = 2;
+
+  // 优先级：
+  // Priority:
+  // departure_time（绝对时间）-> wait_time（相对时间）->
+  // departure_time (absolute time) -> wait_time (relative time) ->
+  // arrival_time（预计时间）
+  // arrival_time (estimated time)
+  // 如果二者都为空则等价于wait_time=0
+  // If both are empty, it is equivalent to wait_time=0
+
+  // 期望的出发时间（单位: 秒）
+  // Expected departure time (in seconds)
+  optional double departure_time = 3;
+  // 期望的等待时间（单位：秒），如果departure_time为空则wait_time默认为0
+  // The expected waiting time (in seconds), if departure_time is empty,
+  // wait_time defaults to 0
+  optional double wait_time = 4;
+  // 期望的到达时间（单位: 秒）
+  // Expected arrival time (in seconds)
+  optional double arrival_time = 5;
+
+  // 本次出行目的地的活动名
+  // The activity name of the destination for this trip
+  optional string activity = 6;
+
+  // 预计算的导航结果
+  // Pre calculated routing results
+  repeated routing.Journey routes = 7;
+  // 本次出行的智能体状态序列
+  // Agent state sequence for this trip
+  repeated AgentState agent_states = 8;
+}
+
+// 时刻表
+// Schedule
+// 关于出发时间的说明如下：
+// The explanation about the departure time is as follows:
+// 1. Schedule的开始时刻是 departure_time 或者 参考时刻+wait_time，
+// 1. The start time of the Schedule is either departure_time or reference
+// time+wait_time,
+//    参考时刻定义为上一Schedule的结束时刻(即它最后一个Trip的结束时刻)，
+//    The reference time is defined as the end time of the previous Schedule
+//    (i.e. the end time of its last Trip),
+//    或者当它为第一个Schedule时定义为Person更新Schedule后的首次Update
+//    Alternatively, when it is the first Schedule, it can be defined as the
+//    first Update time after Person updates the Schedule
+//    时刻(当有准确时间要求时建议直接指定departure_time)
+//    (it is recommended to specify departuretime directly when there is an
+//    accurate time requirement)
+// 2. Trip的开始时刻是 departure_time 或者 参考时刻+wait_time，参考
+// 2. The start time of the Trip is either departure_time or reference
+// time+wait_time,
+//    时刻定义为上一Trip的结束时刻，或者当它为第一个Trip时定义为所属的
+//    The reference time is defined as the end time of the previous Trip, or
+//    when it is the first Trip, Schedule的开始时刻 it is defined as the start
+//    time of the Schedule to which it belongs
+// 3. Person的实际运行时刻取决于Trip的开始时刻，例如它的首次运行是第一
+// 3. The actual running time of a Person depends on the start time of the Trip,
+//    个Schedule中第一个Trip的开始时刻
+//    for example, its first run is the start time of the first Trip in the
+//    first Schedule
+// FAQ
+// Q1: 同时指定Schedule和第一个Trip的departure_time会怎样？
+// Q1: What would happen if both the Schedule and the departuretime of the first
+// Trip were specified simultaneously? A1: 参照(2)，只看Trip的departure_time A1:
+// Referring to (2), only depend on the departuretime of Trip Q2:
+// Schedule和第一个Trip同时指定wait_time=10会怎样？ Q2: What would happen if
+// both the Schedule and the first Trip were specified with wait_time=10 at the
+// same time? A2: 参照(2)，等待时间为10+10=20 A2: Referring to (2), the waiting
+// time is 10+10=20
+message Schedule {
+  // 出行列表
+  // List of trips
+  repeated Trip trips = 1;
+  // trips的执行次数，0表示无限循环，大于0表示执行几次
+  // The number of times trips are executed, where 0 represents infinite loops
+  // and greater than 0 represents how many times they are executed
+  int32 loop_count = 2;
+
+  // 优先级：
+  // Priority:
+  // departure_time（绝对时间）-> wait_time（相对时间）->
+  // departure_time (absolute time) -> wait_time (relative time) ->
+  // arrival_time（预计时间）
+
+  // 期望的出发时间（单位: 秒）
+  // Expected departure time (in seconds)
+  optional double departure_time = 3;
+  // 期望的等待时间（单位：秒），如果departure_time为空则wait_time默认为0
+  // Expected waiting time (in seconds), if departure_time is empty, wait_time
+  // defaults to 0
+  optional double wait_time = 4;
+}

@@ -1,0 +1,36 @@
+input:
+  data_dir: "path/to/data"
+  model_path: "path/to/model"
+  model_config_path: "path/to/model/config"
+
+control:
+  step:
+    start: 0
+    total: 91
+    interval: 0.1
+  # deep models
+  enable_poly_emb: False # compute poly embedding when init
+  enable_plan: False # enable diffusive planning
+  plan_interval: 80
+  plan_init_step: 10
+  device: "cuda"
+  # scenario config
+  allow_new_obj: True # allow new object to enter the scene
+  reactive: False # reactive control
+  no_static: False # remove static objects
+  guidance: False # enable guidance
+
+reward:
+  forward: 2 # displacement reward
+  collision: 5 # collision penalty
+  smooth: 1 # smoothness penalty
+  destination: 1 # destination reward
+
+render:
+  center_id: "ads" # agent id or junction id
+  center_type: "agent" # "agent" or "junction"
+  fig_size: [8, 8] # figure size
+  range: [-75, 75, -75, 75] # min_x, max_x, min_y, max_y
+  plot_id: False # plot agent id
+  plot_ref_traj: False # plot reference trajectory
+  axises: False # plot axises

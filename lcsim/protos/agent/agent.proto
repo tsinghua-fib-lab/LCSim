@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package agent;
+
+import "agent/trip.proto";
+import "geo/geo.proto";
+
+// 参考https://github.com/waymo-research/waymo-open-dataset
+enum AgentType {
+  // 未指定
+  AGENT_TYPE_UNSPECIFIED = 0;
+  // 车辆
+  AGENT_TYPE_VEHICLE = 1;
+  // 行人
+  AGENT_TYPE_PEDESTRIAN = 2;
+  // 自行车
+  AGENT_TYPE_CYCLIST = 3;
+  // 其他
+  AGENT_TYPE_OTHER = 4;
+}
+
+// 智能体属性（通用）
+message AgentAttribute {
+  // 智能体类型
+  AgentType type = 1;
+  // 单位: m，长度
+  double length = 2;
+  // 单位: m，宽度
+  double width = 3;
+  // 单位: m/s
+  double max_speed = 4;
+  // 单位: m/s^2, 最大加速度（正值）
+  double max_acceleration = 5;
+  // 单位: m/s^2, 最大减速度（负值）
+  double max_braking_acceleration = 6;
+  // 单位: m/s^2, 一般加速度（正值），要求小于最大加速度
+  double usual_acceleration = 7;
+  // 单位: m/s^2, 一般减速度（负值），要求大于最大减速度
+  double usual_braking_acceleration = 8;
+}
+
+// 车辆附加属性
+message VehicleAttribute {
+  // 单位: m, 完成变道所需路程
+  double lane_change_length = 1;
+  // 单位：米，本车距离前车的最小距离
+  double min_gap = 2;
+}
+
+// 智能体
+message Agent {
+  // 智能体ID
+  int32 id = 1;
+  // 参数
+  AgentAttribute attribute = 2;
+  // 初始位置
+  geo.Position home = 3;
+  // 初始日程
+  repeated Schedule schedules = 4;
+  // 车辆附加属性
+  optional VehicleAttribute vehicle_attribute = 5;
+}
+
+// 智能体集合，对应一个智能体pb文件或一个智能体mongodb collection
+message Agents {
+  repeated Agent agents = 1;
+  optional int32 ads_index = 2;
+}

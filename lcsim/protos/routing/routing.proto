@@ -1,0 +1,163 @@
+syntax = "proto3";
+
+package routing;
+
+// 导航请求类型
+// routing type
+enum RouteType {
+  // 未指定
+  ROUTE_TYPE_UNSPECIFIED = 0;
+  // 驾车
+  ROUTE_TYPE_DRIVING = 1;
+  // 步行
+  ROUTE_TYPE_WALKING = 2;
+  // 公交
+  ROUTE_TYPE_BY_BUS = 3;
+}
+
+// 移动方式
+// travelling mode
+// Journey用以描述采用一种特定交通方式从一点出发到达另一点的路径。
+// Journey is used to describe the path from one point to another using one
+// specific travelling mode 一般来说，多个Journey是一个Trip的“实现”。 Generally,
+// multiple Journeys are used to "implement" a Trip
+// 例如：Trip(从清华乘地铁到天安门):
+// For example: Trip (taking the subway from Tsinghua to Tiananmen Square):
+// Journey(步行到地铁站)->Journey(地铁)->Journey(步行到天安门)
+// Journey (walking to subway station) -> Journey (subway) -> Journey (walking
+// to Tiananmen Square)
+enum JourneyType {
+  // 未指定
+  // unspecified
+  JOURNEY_TYPE_UNSPECIFIED = 0;
+  // 驾车
+  // driving
+  JOURNEY_TYPE_DRIVING = 1;
+  // 步行
+  // walking
+  JOURNEY_TYPE_WALKING = 2;
+  // 公交
+  // taking bus
+  JOURNEY_TYPE_BY_BUS = 3;
+}
+
+// 驾车出行方式的路径规划结果
+// Routing results for driving journey
+message DrivingJourneyBody {
+  // 从起点到终点的道路序列
+  // Road sequence from origin to destination
+  // 采用道路序列的原因是主动变道对车道级的导航需要频繁修改
+  // The reason for using road sequences is that active lane changing requires
+  // frequent modifications to lane level navigation
+  // 优先使用road_ids，如果road_ids为空，则使用route（也可以直接忽略route）
+  // Prioritize using road_ids. If road_ids is empty, use route (or simply
+  // ignore route)
+  repeated int32 road_ids = 2;
+  // 从起点到终点预计的时间(estimation time of arrival)
+  // estimation time of arrival
+  double eta = 3;
+}
+
+// 步行移动方向
+// Walking direction
+// 行人前进的方向与Lane的正方向（s增大的方向）的关系
+// The relationship between the direction of pedestrian movement and the
+// positive direction of Lane (the direction where s increases)
+enum MovingDirection {
+  // 未指定
+  // unspecified
+  MOVING_DIRECTION_UNSPECIFIED = 0;
+  // 与正方向同向
+  // In the same direction as the positive lane direction
+  MOVING_DIRECTION_FORWARD = 1;
+  // 与正方向反向
+  // In the opposite direction as the positive lane direction
+  MOVING_DIRECTION_BACKWARD = 2;
+}
+
+// 步行出行方式的路径规划结果中的一段
+// A segment in the routing results of walking journey
+message WalkingRouteSegment {
+  // Lane ID
+  int32 lane_id = 1;
+  // 移动方向
+  // moving direction
+  MovingDirection moving_direction = 2;
+}
+
+// 步行出行方式的路径规划结果
+// Routing results of walking journey
+message WalkingJourneyBody {
+  // 从起点到终点的（Lane+方向）序列
+  // The (Lane+direction) sequence from the origin to destination
+  repeated WalkingRouteSegment route = 1;
+  // 从起点到终点预计的时间(estimation time of arrival)
+  // estimation time of arrival
+  double eta = 2;
+}
+
+message BusJourneyBody {
+  int32 line_id = 1;
+  int32 start_station_id = 2;
+  int32 end_station_id = 3;
+}
+
+// 路径规划结果的一部分，含且仅含采用一种交通出行方式的完整出行序列
+// Part of the routing results, including a complete travel sequence using
+// exactly one travelling mode
+message Journey {
+  // 出行方式
+  // journey travelling mode
+  JourneyType type = 1;
+
+  // 出行方式的具体信息
+  // detailed information of journey
+
+  // 驾车
+  // Routing results for driving journey
+  optional DrivingJourneyBody driving = 2;
+  // 步行
+  // Routing results of walking journey
+  optional WalkingJourneyBody walking = 3;
+  // 公交
+  // Routing results of bus journey
+  optional BusJourneyBody by_bus = 4;
+
+  // optional TaxiJourneyBody by_taxi = 5;
+}
+
+// 公交线路
+// Bus line
+message BusLine {
+  // 线路ID
+  // bus line ID
+  int32 line_id = 1;
+  // 停靠站点AOI ID列表
+  // List of the AOI IDs of bus stations
+  repeated int32 stops = 2;
+  repeated double distances = 3;
+  int32 interval = 4;
+  int32 count = 5;
+}
+
+// 公交线路集合，对应一个公交线路pb文件或一个公交线路mongodb collection
+// Bus lines collection, corresponding to a bus line PB file or a bus line
+// mongodb collection
+message BusLines { repeated BusLine lines = 1; }
+
+// 预计算路况信息
+// Pre calculate road condition information
+message RoadStatus {
+  // 车道ID
+  // Lane ID
+  int32 id = 1;
+  // 车道在各个时间片（每个5min）的速度
+  // The speed of the lane at each time slot (5 minutes each)
+  repeated double speed = 2;
+}
+
+// 预计算道路路况信息集合，对应一个预计算道路况信息pb文件或一个预计算路况信息mongodb
+// collection Pre calculated road condition information set, corresponding to a
+// pre calculated road condition information PB file or a pre calculated road
+// condition information mongodb collection
+message RoadStatuses { repeated RoadStatus road_statuses = 1; }

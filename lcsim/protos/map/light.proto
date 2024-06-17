@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package map;
+
+// 本文件描述交通灯
+// This file describes traffic lights
+
+// 交通灯的状态
+// traffic light state
+enum LightState {
+  // 未指定
+  // unspecified
+  LIGHT_STATE_UNSPECIFIED = 0;
+  // 红灯
+  // red light
+  LIGHT_STATE_RED = 1;
+  // 绿灯
+  // green light
+  LIGHT_STATE_GREEN = 2;
+  // 黄灯
+  // yellow light
+  LIGHT_STATE_YELLOW = 3;
+}
+
+// 交通灯相位
+// traffic light phase
+message Phase {
+  // 相位持续时间，单位秒
+  // Phase duration in seconds
+  double duration = 1;
+  // 描述该相位下每个lane的灯控情况，lane与Junction.lane_ids一一对应
+  // The lighting control situation of each lane in this phase, and the lane
+  // corresponds one-to-one with junction.lane_ids
+  repeated LightState states = 2;
+}
+message AvailablePhase {
+  // 描述最大压力信控的可行相位，由每个lane的灯控情况组成，lane与Junction.lane_ids一一对应
+  // Describes the feasible phase for max pressure algorithm, consisting of the
+  // lighting control situation for each lane in the junction, nd the lane
+  // corresponds one-to-one with junction.lane_ids
+  repeated LightState states = 1;
+}
+
+// 交通灯
+// traffic light
+message TrafficLight {
+  // 所在路口id
+  // ID of the junction where the traffic light is at
+  int32 junction_id = 1;
+  // 相位循环的一个循环周期
+  // One cycle of phase cycling
+  repeated Phase phases = 2;
+}

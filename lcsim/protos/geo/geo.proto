@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package geo;
+
+// 本文件描述地理坐标体系，包含三种坐标分类:
+// This file describes the geographical coordinate system, including three
+// coordinate classifications:
+// 1. LongLatPosition
+//   经纬度坐标, 经度 longitute 120.234256 纬度 latitude 40.2321782
+//              高程（单位：米） z 100.0
+//   Latitude and longitude coordinates, longitute 120.234256
+//   latitude 40.2321782
+// 2. XYPosition
+//   按米计算的平面x/y/z坐标
+//   Plane x/y/z coordinates in meters
+// 3. AoiPosition, LanePosition
+//   地图坐标（例如：AOI、车道+距离s）
+//   Map coordinates (for example: AOI, lane + distance s)
+// 上述三种坐标分类以Position作为导出坐标。
+// The above three coordinate classifications use Position as the derived
+// coordinate.
+//
+// 其他：
+// other:
+// 4. LongLatRectArea
+//   经纬度矩形区域
+//   latitude and longitude rectangular area
+
+// WGS84经纬度坐标
+// WGS84 longitute and latitude coordinates
+message LongLatPosition {
+  // 经度
+  // longitude
+  double longitude = 1;
+  // 纬度
+  // latitude
+  double latitude = 2;
+  // 高程（单位：米）
+  // elevation (unit: meters)
+  optional double z = 3;
+}
+
+// XY坐标
+// XY coordinates
+message XYPosition {
+  // x坐标，单位米，对应经度
+  // x coordinate, in meters, corresponding to longitude
+  double x = 1;
+  // y坐标，单位米，对应纬度
+  // y coordinate, in meters, corresponding to latitude
+  double y = 2;
+  // z坐标，单位米，对应高程
+  // z coordinate, in meters, corresponding to elevation
+  optional double z = 3;
+}
+
+// 地图坐标（车道+距离s）
+// Map coordinates (lane ID + distance s)
+message LanePosition {
+  // 车道id
+  // Lane ID
+  int32 lane_id = 1;
+  // s是车道上的点到车道起点的距离
+  // s is the distance from the point on the lane to the starting point of the
+  // lane
+  double s = 2;
+}
+
+// 坐标，如果多种坐标同时存在，两两之间必须满足映射关系，同时逻辑坐标是必须提供的
+// Coordinates, if multiple coordinates exist at the same time, the mapping
+// relationship between them must be satisfied, and logical coordinates must be
+// provided.
+message Position {
+  // 地图坐标AOI
+  // Map coordinates AOI (one of these must be provided)
+  optional LanePosition lane_position = 1;
+  // WGS84经纬度坐标
+  // WGS84 longitute and latitude coordinates
+  optional LongLatPosition longlat_position = 2;
+  // XY坐标
+  // XY coordinates
+  optional XYPosition xy_position = 3;
+}
+
+// 经纬度矩形区域
+// latitude and longitude rectangular area
+message LongLatBBox {
+  // 最小经度
+  // minimum longitude
+  double min_longitude = 1;
+  // 最小纬度
+  // minimum latitude
+  double min_latitude = 2;
+  // 最大经度
+  // maximu longitude
+  double max_longitude = 3;
+  // 最大纬度
+  // minimum longitude
+  double max_latitude = 4;
+}

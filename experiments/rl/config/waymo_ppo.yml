@@ -1,0 +1,88 @@
+env: "BicycleSingleEnv"
+# training
+horizon: 100
+num_sgd_iter: 20
+lr: 0.0001
+rollout_fragment_length: 500
+sgd_minibatch_size: 200
+train_batch_size: 8000
+num_gpus: 0.1
+num_workers: 4
+num_cpus_per_worker: 2
+num_gpus_per_worker: 0.1
+framework: "torch"
+# environment
+env_config:
+  input:
+    dataset_path: "path/to/train/data"
+    num_scenarios: 400
+    model_path: "path/to/model"
+    model_config_path: "path/to/model/config"
+  control:
+    step:
+      start: 0
+      total: 90
+      interval: 0.1
+    enable_poly_emb: True
+    enable_plan: False
+    plan_interval: 80
+    plan_init_step: 10
+    device: "cuda"
+    allow_new_obj: True
+    release_idle: True
+    reactive: False
+    no_static: False
+    guidance: False
+  reward:
+    forward: 0.1 # displacement reward
+    collision: 10 # collision penalty
+    offroad: 5 # offroad penalty
+    smooth: 2 # smoothness penalty
+    destination: 1 # destination reward
+  render:
+    center_id: "ads" # agent id or junction id
+    center_type: "agent" # "agent" or "junction"
+    fig_size: [8, 8] # figure size
+    range: [-75, 75, -75, 75] # min_x, max_x, min_y, max_y
+    plot_id: True # plot agent id
+    plot_ref_traj: False # plot reference trajectory
+# evaluation
+evaluation_interval: 10
+evaluation_duration: 100
+evaluation_duration_unit: "episodes"
+evaluation_num_workers: 2
+evaluation_config:
+  env_config:
+    input:
+      dataset_path: "path/to/eval/data"
+      num_scenarios: 40
+      model_path: "path/to/model"
+      model_config_path: "path/to/model/config"
+    control:
+      step:
+        start: 0
+        total: 90
+        interval: 0.1
+      enable_poly_emb: True
+      enable_plan: False
+      plan_interval: 80
+      plan_init_step: 10
+      device: "cuda"
+      allow_new_obj: True
+      release_idle: True
+      reactive: False
+      no_static: False
+      guidance: False
+    reward:
+      forward: 0.1 # displacement reward
+      collision: 10 # collision penalty
+      offroad: 5 # offroad penalty
+      smooth: 2 # smoothness penalty
+      destination: 1 # destination reward
+    render:
+      center_id: "ads" # agent id or junction id
+      center_type: "agent" # "agent" or "junction"
+      fig_size: [8, 8] # figure size
+      range: [-75, 75, -75, 75] # min_x, max_x, min_y, max_y
+      plot_id: True # plot agent id
+      plot_ref_traj: False # plot reference trajectory

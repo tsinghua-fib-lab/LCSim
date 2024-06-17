@@ -1,0 +1,64 @@
+title: "motion-diff@zyh"
+seed: 42
+version: "mvel_sigma_0.1_lr_one-cycle_data_all"
+
+trainer:
+  accelerator: "gpu"
+  devices: [2, 3, 4, 5]
+  max_epochs: 200
+  val_interval: 1
+  ckpt_path: None
+
+dataset:
+  name: "womd" # womd, argoverse2
+  data_dir: "path/to/data"
+  batch_size:
+    train: 4
+    val: 8
+  data_len:
+    train: null
+    val: null
+  num_workers: 8
+  pin_memory: False
+
+model:
+  target: "module_vel" # module_vel, pca, post_vel
+  sigma_data: 0.1
+  input_dim: 2 # x, y
+  output_dim: 2 # consistent with target
+  hidden_dim: 128
+  num_historical_steps: 11
+  num_future_steps: 80
+  weight_decay: 0.03
+  lr: 0.0005
+  lr_scheduler: "OneCycleLR" # CosineAnnealingLR, OneCycleLR
+  T_max: 200
+  pca_path: "/path/to/pca.pkl"
+  map_encoder:
+    num_pl_types: 20
+    polyline:
+      hidden_dim: 64
+      num_layers: 5
+      num_pre_layers: 3
+    num_freq_bands: 64
+  agent_encoder:
+    time_span: 10
+    a2a_radius: 50
+    pl2a_radius: 50
+    num_freq_bands: 64
+    num_layers: 2
+    num_heads: 8
+    head_dim: 64
+    dropout: 0.1
+  diff_decoder:
+    output_head: False
+    num_t2m_steps: 10
+    pl2m_radius: 150
+    a2m_radius: 150
+    num_freq_bands: 64
+    num_layers: 2
+    num_recurrent_steps: 2
+    num_heads: 8
+    head_dim: 64
+    dropout: 0.1
+    pca_dim: null
