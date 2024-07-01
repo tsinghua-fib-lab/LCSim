@@ -4,7 +4,7 @@ version: "mvel_sigma_0.1_lr_one-cycle_data_all"
 
 trainer:
   accelerator: "gpu"
-  devices: [2, 3, 4, 5]
+  devices: [0, 1, 2, 3]
   max_epochs: 200
   val_interval: 1
   ckpt_path: None
