@@ -58,17 +58,17 @@ This will generate the preprocessed dataset in h5 format (training.h5/validation
 python3 experiments/diff/train_md.py --config motion_diff/configs/config.yml --save /path/to/log_dir
 ```
 
-The trained model will be saved in the log directory and you can check the training process in tensorboard by running `tensorboard --logdir /path/to/log_dir`. We trained our model for 200 epochs on the whole training set of WOMD, wihch takes about 20 days on 4 NVIDIA 4090 GPUs, the hyperparameters are the same as the ones in the config file.
+The trained model will be saved in the log directory and you can check the training process in tensorboard by running `tensorboard --logdir /path/to/log_dir`. We trained our model for 200 epochs on the whole training set of WOMD, which takes about 20 days on 4 NVIDIA 4090 GPUs, the hyperparameters are the same as the ones in the config file.
 
 ## Running the simulation
 
 **step 1**: scenario data preparation
 
-We provide scenario construction tools from multiple sources, including the Waymo Open Motion Dataset (WOMD), the Argoverse dataset, and the [MOSS](https://moss.fiblab.net/) scenrios. You can convert them into the unified format for simulation by scripts in the `lcsim/scripts/scenario_converts` directory. Example scenarios are provided in the `examples/data` directory.
+We provide scenario construction tools from multiple sources, including the Waymo Open Motion Dataset (WOMD), the Argoverse dataset, and the [MOSS](https://moss.fiblab.net/) scenarios. You can convert them into the unified format for simulation by scripts in the `lcsim/scripts/scenario_converts` directory. Example scenarios are provided in the `examples/data` directory.
 
 **step 2**: running the simulation
 
-Whole prosess of running the simulation is in the `exapmles/simulation.ipynb` notebook. You can run the notebook to see the simulation results.
+The whole simulation process is in the `exapmles/simulation.ipynb` notebook. You can run the notebook to see the simulation results.
 
 ## Reinforcement learning
 
