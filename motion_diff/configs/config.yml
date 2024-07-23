@@ -7,7 +7,7 @@ trainer:
   devices: [0, 1, 2, 3]
   max_epochs: 200
   val_interval: 1
-  ckpt_path: None
+  ckpt_path: null
 
 dataset:
   name: "womd" # womd, argoverse2
