@@ -13,8 +13,8 @@ dataset:
   name: "womd" # womd, argoverse2
   data_dir: "path/to/data"
   batch_size:
-    train: 4
-    val: 8
+    train: 16
+    val: 16
   data_len:
     train: null
     val: null

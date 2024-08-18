@@ -58,7 +58,7 @@ This will generate the preprocessed dataset in h5 format (training.h5/validation
 python3 experiments/diff/train_md.py --config motion_diff/configs/config.yml --save /path/to/log_dir
 ```
 
-The trained model will be saved in the log directory and you can check the training process in tensorboard by running `tensorboard --logdir /path/to/log_dir`. We trained our model for 200 epochs on the whole training set of WOMD, which takes about 20 days on 4 NVIDIA 4090 GPUs, the hyperparameters are the same as the ones in the config file.
+The trained model will be saved in the log directory and you can check the training process in tensorboard by running `tensorboard --logdir /path/to/log_dir`. We trained our model for 200 epochs on the whole training set of WOMD, which takes about one week on 4 NVIDIA 4090 GPUs, the hyperparameters are the same as the ones in the config file.
 
 ## Running the simulation
 
