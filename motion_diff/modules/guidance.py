@@ -133,6 +133,72 @@ class OnLane(nn.Module):
         return torch.mean(min_dis)
 
 
+class Velocity(nn.Module):
+
+    DESIRED_SPEED = 4.0  # desired speed [m/0.1s]
+    VEL_MEAN = 0.2417  # mean of velocity [m/0.1s]
+
+    def __init__(self, epsilon=1e-6, alpha=0.05, num_step=10, beta=0.05):
+        super(Velocity, self).__init__()
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.num_step = num_step
+        self.beta = beta  # clipping parameter
+
+    def loss(
+        self,
+        x: torch.Tensor,
+        diffuser,
+        data: HeteroData,
+    ):
+        module = torch.clip(x[..., 0] + self.VEL_MEAN, min=0)
+        diff = torch.nn.functional.relu(self.DESIRED_SPEED - module)
+        return torch.mean(diff)
+
+
+class Acceleration(nn.Module):
+
+    ACC_MAX = 3.0
+
+    def __init__(self, epsilon=1e-6, alpha=0.05, num_step=10, beta=0.05):
+        super(Acceleration, self).__init__()
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.num_step = num_step
+
+    def loss(
+        self,
+        x: torch.Tensor,
+        diffuser,
+        data: HeteroData,
+    ):
+        vel_module = torch.clip(x[..., 0] + Velocity.VEL_MEAN, min=0)
+        acc = vel_module[..., 1:] - vel_module[..., :-1]
+        loss = torch.nn.functional.relu(acc.abs() - self.ACC_MAX)
+        return torch.mean(loss)
+
+
+class GoalPoint(nn.Module):
+
+    def __init__(self, epsilon=1e-6, alpha=0.05, num_step=10, beta=0.05):
+        super(GoalPoint, self).__init__()
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.num_step = num_step
+
+    def loss(
+        self,
+        x: torch.Tensor,
+        diffuser,
+        data: HeteroData,
+        goal_point: torch.Tensor,
+        mask: torch.Tensor,
+    ):
+        xy = diffuser._reconstruct_traj(data, x)  # (agent_num, time_step, 2)
+        dis = torch.norm((xy - goal_point), dim=-1, p=2) * mask
+        return torch.mean(dis)
+
+
 class RealGuidance(nn.Module):
     def __init__(self, alpha=0.5, num_step=10, beta=0.1, guidance_steps=18):
         super(RealGuidance, self).__init__()
