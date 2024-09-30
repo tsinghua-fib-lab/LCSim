@@ -2,12 +2,6 @@
 
 **LCSim: A Large-Scale Controllable Traffic Simulator**
 
-[
-[**Webpage**](https://tsinghua-fib-lab.github.io/LCSim/) |
-[**Code**](https://github.com/tsinghua-fib-lab/LCSim) |
-[**Paper**](https://arxiv.org/abs/2406.19781)
-]
-
 ## Getting Started
 
 **step 1**: clone the repository
@@ -79,22 +73,6 @@ python3 experiments/rl/train_waymo.py
 ```
 
 By modifying the environment configuration in the configuration file, you can enable diffusive simulation and guidance for constructing driving scenarios with different styles.
-
-## Citation
-
-If you find this work useful, please consider citing our paper:
-
-```
-@misc{zhang2024lcsimlargescalecontrollabletraffic,
-    title={LCSim: A Large-Scale Controllable Traffic Simulator}, 
-    author={Yuheng Zhang and Tianjian Ouyang and Fudan Yu and Cong Ma and Lei Qiao and Wei Wu and Jian Yuan and Yong Li},
-    year={2024},
-    eprint={2406.19781},
-    archivePrefix={arXiv},
-    primaryClass={cs.RO},
-    url={https://arxiv.org/abs/2406.19781}, 
-}
-```
 
 ## License
 
