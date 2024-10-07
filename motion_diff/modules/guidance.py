@@ -234,13 +234,18 @@ class RealGuidance(nn.Module):
         diffuser: the diffuser module
         """
         x = x.clone().detach().requires_grad_(True)
+        optimizer = torch.optim.Adam([x], lr=self.alpha)
         x_0 = x.clone().detach()
         for _ in range(self.num_step):
+            optimizer.zero_grad()
             loss = 0
             for name, module in self.guidance_modules.items():
                 loss += module.loss(x, diffuser, data) * self.guidance_factors[name]
-            grad = torch.autograd.grad(loss, x)[0]
-            x = x - self.alpha * grad
+            loss.backward()
+            optimizer.step()
             delta = torch.clip(x - x_0, -self.beta, self.beta)
-            x = x_0 + delta
+            x = (x_0 + delta).detach().requires_grad_(True)
+            optimizer_state = optimizer.state_dict()
+            optimizer = torch.optim.Adam([x], lr=self.alpha)
+            optimizer.load_state_dict(optimizer_state)
         return x
