@@ -135,7 +135,7 @@ class DiffDecoder(nn.Module):
                     head_dim=self.head_dim,
                     dropout=self.dropout,
                     bipartite=False,
-                    has_pos_emb=True,
+                    has_pos_emb=False,
                 )
                 for _ in range(self.num_layers)
             ]
